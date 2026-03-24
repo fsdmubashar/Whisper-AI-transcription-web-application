@@ -96,8 +96,10 @@ async def health_check():
 )
 async def transcribe_audio(
     files: List[UploadFile] = File(..., description="Audio files (mp3, wav, m4a, etc.)"),
+    translate: bool = False,
     db: Session = Depends(get_db),
 ):
+
     """
     Multiple audio files upload karo aur text transcript hasil karo.
     Database mein save hota hai history ke liye.
@@ -124,7 +126,8 @@ async def transcribe_audio(
 
         try:
             # Whisper se transcribe karo
-            result = whisper_model.transcribe(tmp_path)
+            task = "translate" if translate else "transcribe"
+	    result = whisper_model.transcribe(tmp_path, task=task)
 
             # Database mein save karo
             db_record = models.Transcription(
