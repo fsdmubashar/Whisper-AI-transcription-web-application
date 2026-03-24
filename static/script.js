@@ -1,190 +1,185 @@
-/**
- * VoiceScript Frontend Logic
- * File upload, transcription API call, history management
- */
-
-// ── DOM Elements ──────────────────────────────────────
-const dropZone       = document.getElementById('dropZone');
-const fileInput      = document.getElementById('fileInput');
-const fileList       = document.getElementById('fileList');
-const transcribeBtn  = document.getElementById('transcribeBtn');
-const btnText        = document.getElementById('btnText');
-const btnSpinner     = document.getElementById('btnSpinner');
+// ── ELEMENTS ──
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const transcribeBtn = document.getElementById('transcribeBtn');
+const btnText = document.getElementById('btnText');
+const btnSpinner = document.getElementById('btnSpinner');
 const resultsSection = document.getElementById('resultsSection');
 const resultsContainer = document.getElementById('resultsContainer');
 const historyContainer = document.getElementById('historyContainer');
-const copyAllBtn     = document.getElementById('copyAllBtn');
-const refreshBtn     = document.getElementById('refreshBtn');
-const toast          = document.getElementById('toast');
+const copyAllBtn = document.getElementById('copyAllBtn');
+const refreshBtn = document.getElementById('refreshBtn');
+const toast = document.getElementById('toast');
 
 let selectedFiles = [];
 
-// ── Toast Notification ────────────────────────────────
+// ── TOAST FIX ──
 function showToast(message, type = 'success') {
-  toast.textContent = message;
-  toast.className = `toast ${type}`;
-  setTimeout(() => { toast.className = 'toast hidden'; }, 3500);
+    toast.textContent = message;
+    toast.className = `toast ${type}`;
+    toast.classList.remove('hidden');
+    setTimeout(() => { toast.classList.add('hidden'); }, 4000);
 }
 
-// ── File Handling ─────────────────────────────────────
-function addFiles(newFiles) {
-  for (const f of newFiles) {
-    if (!selectedFiles.find(x => x.name === f.name)) {
-      selectedFiles.push(f);
+// ── COPY ALL LOGIC (FIXED) ──
+copyAllBtn.addEventListener('click', () => {
+    const textBlocks = document.querySelectorAll('.result-text');
+    if (textBlocks.length === 0) {
+        showToast("No content to copy!", "error");
+        return;
     }
-  }
-  renderFileList();
+
+    // Saare results ko ek string mein jamah karna
+    const allText = Array.from(textBlocks)
+        .map(el => el.innerText)
+        .join('\n\n--- NEXT FILE ---\n\n');
+
+    // Modern clipboard API with fallback
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(allText).then(() => {
+            showToast("✅ Copied to clipboard!");
+        }).catch(err => {
+            console.error('Copy failed', err);
+            fallbackCopy(allText);
+        });
+    } else {
+        fallbackCopy(allText);
+    }
+});
+
+function fallbackCopy(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast("✅ Copied to clipboard!");
+    } catch (err) {
+        showToast("❌ Copy failed", "error");
+    }
+    document.body.removeChild(textArea);
+}
+
+// ── FILE HANDLING ──
+function addFiles(newFiles) {
+    for (const f of newFiles) {
+        if (!selectedFiles.find(x => x.name === f.name)) {
+            selectedFiles.push(f);
+        }
+    }
+    renderFileList();
 }
 
 function renderFileList() {
-  fileList.innerHTML = '';
-  selectedFiles.forEach((f, i) => {
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <span>🎵 ${f.name} <small style="color:var(--muted)">(${(f.size/1024).toFixed(1)} KB)</small></span>
-      <button class="remove-btn" data-i="${i}" title="Remove">✕</button>
+    fileList.innerHTML = '';
+    selectedFiles.forEach((f, i) => {
+        const li = document.createElement('li');
+        li.className = 'file-item';
+        li.style.cssText = "display:flex; justify-content:space-between; font-size:0.8rem; background:rgba(255,255,255,0.05); padding:8px; margin-top:5px; border-radius:4px;";
+        li.innerHTML = `
+      <span>📄 ${f.name.substring(0,25)}...</span>
+      <button onclick="removeFile(${i})" style="background:none; border:none; color:#f43f5e; cursor:pointer;">✕</button>
     `;
     fileList.appendChild(li);
-  });
-  transcribeBtn.disabled = selectedFiles.length === 0;
-}
-
-fileList.addEventListener('click', e => {
-  if (e.target.classList.contains('remove-btn')) {
-    selectedFiles.splice(+e.target.dataset.i, 1);
-    renderFileList();
-  }
-});
-
-// ── Drag & Drop ───────────────────────────────────────
-dropZone.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', () => addFiles(fileInput.files));
-
-dropZone.addEventListener('dragover', e => {
-  e.preventDefault();
-  dropZone.classList.add('drag-over');
-});
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  addFiles(e.dataTransfer.files);
-});
-
-// ── Transcribe ────────────────────────────────────────
-transcribeBtn.addEventListener('click', async () => {
-  if (selectedFiles.length === 0) return;
-
-  // Loading state
-  btnText.classList.add('hidden');
-  btnSpinner.classList.remove('hidden');
-  transcribeBtn.disabled = true;
-
-  const formData = new FormData();
-  selectedFiles.forEach(f => formData.append('files', f));
-
-  try {
-    const res = await fetch('/transcribe', { method: 'POST', body: formData });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || 'Transcription failed');
-    }
-
-    const data = await res.json();
-    renderResults(data);
-    showToast(`✅ ${data.length} file(s) transcribed!`);
-
-    // Reset
-    selectedFiles = [];
-    renderFileList();
-    loadHistory();
-
-  } catch (err) {
-    showToast(`❌ ${err.message}`, 'error');
-  } finally {
-    btnText.classList.remove('hidden');
-    btnSpinner.classList.add('hidden');
-    transcribeBtn.disabled = false;
-  }
-});
-
-// ── Render Results ────────────────────────────────────
-function renderResults(items) {
-  resultsSection.classList.remove('hidden');
-  resultsContainer.innerHTML = '';
-
-  items.forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'result-item';
-    div.innerHTML = `
-      <div class="result-meta">
-        <span>📄 ${item.filename}</span>
-        <span class="lang-badge">${item.language}</span>
-        <span>${item.file_size_kb} KB</span>
-        <span>${new Date(item.created_at).toLocaleString()}</span>
-      </div>
-      <div class="result-text">${item.transcript || '(No speech detected)'}</div>
-    `;
-    resultsContainer.appendChild(div);
-  });
-
-  resultsSection.scrollIntoView({ behavior: 'smooth' });
-}
-
-// ── Copy All ──────────────────────────────────────────
-copyAllBtn.addEventListener('click', () => {
-  const texts = [...document.querySelectorAll('.result-text')].map(el => el.textContent).join('\n\n---\n\n');
-  navigator.clipboard.writeText(texts).then(() => showToast('📋 Copied to clipboard!'));
-});
-
-// ── History ───────────────────────────────────────────
-async function loadHistory() {
-  try {
-    const res  = await fetch('/history?limit=20');
-    const data = await res.json();
-
-    if (!data.length) {
-      historyContainer.innerHTML = '<p class="muted">Abhi tak koi transcription nahi hui.</p>';
-      return;
-    }
-
-    historyContainer.innerHTML = '';
-    data.forEach(item => {
-      const div = document.createElement('div');
-      div.className = 'history-item';
-      div.innerHTML = `
-        <div class="h-text">
-          <strong>${item.filename}</strong>
-          <span class="lang-badge" style="margin-left:.4rem">${item.language}</span><br/>
-          <span>${(item.transcript || '').substring(0, 120)}${item.transcript?.length > 120 ? '…' : ''}</span>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.4rem">
-          <span class="h-meta">${new Date(item.created_at).toLocaleDateString()}</span>
-          <button class="delete-btn" data-id="${item.id}" title="Delete">🗑️</button>
-        </div>
-      `;
-      historyContainer.appendChild(div);
     });
-
-  } catch {
-    historyContainer.innerHTML = '<p class="muted">History load nahi hui.</p>';
-  }
+    transcribeBtn.disabled = selectedFiles.length === 0;
 }
 
-// Delete history item
-historyContainer.addEventListener('click', async e => {
-  if (!e.target.classList.contains('delete-btn')) return;
-  const id = e.target.dataset.id;
+window.removeFile = (index) => {
+    selectedFiles.splice(index, 1);
+    renderFileList();
+};
 
-  const res = await fetch(`/transcription/${id}`, { method: 'DELETE' });
-  if (res.ok) {
-    showToast('🗑️ Deleted!');
+// ── DRAG & DROP ──
+dropZone.onclick = () => fileInput.click();
+fileInput.onchange = () => addFiles(fileInput.files);
+
+dropZone.ondragover = (e) => { e.preventDefault(); dropZone.style.borderColor = "#3b82f6"; };
+dropZone.ondragleave = () => { dropZone.style.borderColor = ""; };
+dropZone.ondrop = (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = "";
+    addFiles(e.dataTransfer.files);
+};
+
+// ── API CALL ──
+transcribeBtn.onclick = async () => {
+    btnText.classList.add('hidden');
+    btnSpinner.classList.remove('hidden');
+    transcribeBtn.disabled = true;
+
+    const formData = new FormData();
+    selectedFiles.forEach(f => formData.append('files', f));
+
+    try {
+        const res = await fetch('/transcribe', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error("Server error occurred");
+        
+        const data = await res.json();
+        renderResults(data);
+        showToast(`Processed ${data.length} files successfully`);
+        
+        selectedFiles = [];
+        renderFileList();
+        loadHistory();
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        btnText.classList.remove('hidden');
+        btnSpinner.classList.add('hidden');
+        transcribeBtn.disabled = false;
+    }
+};
+
+function renderResults(items) {
+    resultsSection.classList.remove('hidden');
+    resultsContainer.innerHTML = '';
+    items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'result-item';
+        div.innerHTML = `
+      <div style="font-size:0.7rem; color:#94a3b8; margin-bottom:5px;">FILE: ${item.filename} | LANG: ${item.language}</div>
+      <div class="result-text">${item.transcript || 'No speech detected.'}</div>
+    `;
+        resultsContainer.appendChild(div);
+    });
+}
+
+// ── HISTORY ──
+async function loadHistory() {
+    try {
+        const res = await fetch('/history?limit=10');
+        const data = await res.json();
+        historyContainer.innerHTML = '';
+        
+        if (data.length === 0) {
+            historyContainer.innerHTML = '<p class="muted">No logs found.</p>';
+            return;
+        }
+
+        data.forEach(item => {
+            const div = document.createElement('div');
+            div.style.cssText = "padding:10px 0; border-bottom:1px solid #242b38; display:flex; justify-content:space-between; align-items:center;";
+            div.innerHTML = `
+                <div>
+                    <div style="font-weight:600; font-size:0.85rem;">${item.filename}</div>
+                    <div style="font-size:0.75rem; color:#94a3b8;">${item.transcript ? item.transcript.substring(0, 50) + '...' : 'Empty'}</div>
+                </div>
+                <button onclick="deleteLog('${item.id}')" style="background:none; border:none; cursor:pointer;">🗑️</button>
+            `;
+            historyContainer.appendChild(div);
+        });
+    } catch (e) {
+        historyContainer.innerHTML = '<p class="muted">Error loading logs.</p>';
+    }
+}
+
+window.deleteLog = async (id) => {
+    await fetch(`/transcription/${id}`, { method: 'DELETE' });
     loadHistory();
-  }
-});
+};
 
-refreshBtn.addEventListener('click', loadHistory);
-
-// ── Init ──────────────────────────────────────────────
+refreshBtn.onclick = loadHistory;
 loadHistory();

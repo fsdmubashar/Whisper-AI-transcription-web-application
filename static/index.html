@@ -3,70 +3,101 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VoiceScript – AI Transcription</title>
+  <title>VoiceScript | DevSecOps AI Portal</title>
   <link rel="stylesheet" href="/static/style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <!-- ── HEADER ─────────────────────────────────────── -->
-  <header class="header">
-    <div class="container">
-      <div class="logo">
-        <span class="logo-icon">🎙️</span>
-        <span class="logo-text">VoiceScript</span>
+
+  <!-- ── DASHBOARD HEADER (As per your CV) ──────────────── -->
+  <header class="main-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="logo-box">🚀</div>
+        <div>
+          <h1>VoiceScript AI</h1>
+          <p class="status-line"><span class="dot-live"></span> System Status: Online</p>
+        </div>
       </div>
-      <span class="badge">Powered by OpenAI Whisper</span>
+      
+      <div class="user-profile">
+        <div class="user-info">
+          <span class="user-name">Muhammad Mubashar Karamat Ali</span>
+          <span class="user-title">Junior Cloud DevSecOps Engineer</span>
+          <div class="tech-tags">
+            <span>AWS</span> • <span>Terraform</span> • <span>Jenkins</span> • <span>Docker</span>
+          </div>
+        </div>
+        <div class="user-avatar">M</div>
+      </div>
     </div>
   </header>
 
-  <!-- ── MAIN ───────────────────────────────────────── -->
-  <main class="container">
+  <!-- ── MAIN CONTENT ───────────────────────────────────────── -->
+  <main class="dashboard-grid">
+    
+    <!-- Left Column: Upload & Control -->
+    <div class="col-left">
+      <section class="card upload-card">
+        <div class="card-header">
+          <span class="icon">📁</span>
+          <h3>Upload Terminal</h3>
+        </div>
+        <p class="sub-text">Supported: MP3, WAV, M4A, MP4 | Multi-file Upload</p>
 
-    <!-- Upload Section -->
-    <section class="card upload-card">
-      <h2>Upload Audio Files</h2>
-      <p class="sub">Supports MP3, WAV, M4A, OGG, FLAC, MP4 · Multiple files allowed</p>
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-content">
+            <span class="upload-icon">☁️</span>
+            <p>Drag & Drop files or <label for="fileInput" class="browse-link">Browse System</label></p>
+          </div>
+          <input type="file" id="fileInput" multiple accept=".mp3,.wav,.m4a,.ogg,.flac,.mp4" hidden />
+        </div>
 
-      <div class="drop-zone" id="dropZone">
-        <div class="drop-icon">📂</div>
-        <p>Drag & Drop files here or <label for="fileInput" class="browse-link">Browse</label></p>
-        <input type="file" id="fileInput" multiple
-          accept=".mp3,.wav,.m4a,.ogg,.flac,.mp4,.webm" hidden />
-      </div>
+        <ul class="file-list" id="fileList"></ul>
 
-      <!-- Selected files list -->
-      <ul class="file-list" id="fileList"></ul>
+        <button class="btn btn-primary" id="transcribeBtn" disabled>
+          <span id="btnText">EXECUTE TRANSCRIPTION</span>
+          <span id="btnSpinner" class="spinner hidden"></span>
+        </button>
+      </section>
 
-      <button class="btn btn-primary" id="transcribeBtn" disabled>
-        <span id="btnText">🚀 Transcribe</span>
-        <span id="btnSpinner" class="spinner hidden"></span>
-      </button>
-    </section>
+      <!-- Project Tech Stack (Visual from your image) -->
+      <section class="card tech-stack-card">
+        <div class="card-header"><h3>System Architecture</h3></div>
+        <div class="stack-grid">
+          <span class="tag">OpenAI Whisper</span>
+          <span class="tag">Python/FastAPI</span>
+          <span class="tag">Docker</span>
+          <span class="tag">AWS EC2</span>
+          <span class="tag">Jenkins CI/CD</span>
+        </div>
+      </section>
+    </div>
 
-    <!-- Results Section -->
-    <section class="card results-card hidden" id="resultsSection">
-      <div class="results-header">
-        <h2>Transcription Results</h2>
-        <button class="btn btn-sm" id="copyAllBtn">📋 Copy All</button>
-      </div>
-      <div id="resultsContainer"></div>
-    </section>
+    <!-- Right Column: Results & History -->
+    <div class="col-right">
+      <section class="card results-card hidden" id="resultsSection">
+        <div class="card-header-flex">
+          <h3><span class="icon">📝</span> Live Output</h3>
+          <button class="btn btn-sm btn-outline" id="copyAllBtn">COPY ALL OUTPUT</button>
+        </div>
+        <div id="resultsContainer" class="results-stream"></div>
+      </section>
 
-    <!-- History Section -->
-    <section class="card history-card">
-      <div class="results-header">
-        <h2>📜 History</h2>
-        <button class="btn btn-sm" id="refreshBtn">🔄 Refresh</button>
-      </div>
-      <div id="historyContainer">
-        <p class="muted">Loading history...</p>
-      </div>
-    </section>
+      <section class="card history-card">
+        <div class="card-header-flex">
+          <h3><span class="icon">📊</span> Transcription Logs</h3>
+          <button class="btn btn-refresh" id="refreshBtn">🔄 Refresh</button>
+        </div>
+        <div id="historyContainer" class="history-list">
+          <p class="muted">Scanning logs...</p>
+        </div>
+      </section>
+    </div>
 
   </main>
 
-  <!-- ── TOAST ──────────────────────────────────────── -->
   <div class="toast hidden" id="toast"></div>
 
   <script src="/static/script.js"></script>
