@@ -1,0 +1,68 @@
+version: "3.9"
+
+# ══════════════════════════════════════════════════════
+#  Docker Compose - Local Development & EC2 Deployment
+# ══════════════════════════════════════════════════════
+
+services:
+
+  # ── App (FastAPI + Gunicorn + Whisper) ─────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production          # Multi-stage ka production stage use karo
+    image: whisper-transcription:latest
+    container_name: whisper_app
+    restart: unless-stopped       # Crash pe auto-restart
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      - WHISPER_MODEL_SIZE=${WHISPER_MODEL_SIZE:-base}
+      - DATABASE_URL=sqlite:////app/data/transcriptions.db
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-2}
+    volumes:
+      # Database persistent storage (container delete hone pe data rahega)
+      - db_data:/app/data
+      # Whisper model cache (bar bar download na ho)
+      - whisper_cache:/root/.cache/whisper
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s           # Whisper model load time ke liye
+
+  # ── Nginx Reverse Proxy ────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: whisper_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # SSL ke liye (optional, Let's Encrypt ke saath use karo)
+      # - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      app:
+        condition: service_healthy  # App healthy hone ke baad nginx start hoga
+    networks:
+      - app_network
+
+# ── Volumes ────────────────────────────────────────────
+volumes:
+  db_data:
+    driver: local
+  whisper_cache:
+    driver: local
+
+# ── Networks ───────────────────────────────────────────
+networks:
+  app_network:
+    driver: bridge

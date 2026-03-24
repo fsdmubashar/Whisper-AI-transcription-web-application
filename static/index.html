@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoiceScript – AI Transcription</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <!-- ── HEADER ─────────────────────────────────────── -->
+  <header class="header">
+    <div class="container">
+      <div class="logo">
+        <span class="logo-icon">🎙️</span>
+        <span class="logo-text">VoiceScript</span>
+      </div>
+      <span class="badge">Powered by OpenAI Whisper</span>
+    </div>
+  </header>
+
+  <!-- ── MAIN ───────────────────────────────────────── -->
+  <main class="container">
+
+    <!-- Upload Section -->
+    <section class="card upload-card">
+      <h2>Upload Audio Files</h2>
+      <p class="sub">Supports MP3, WAV, M4A, OGG, FLAC, MP4 · Multiple files allowed</p>
+
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📂</div>
+        <p>Drag & Drop files here or <label for="fileInput" class="browse-link">Browse</label></p>
+        <input type="file" id="fileInput" multiple
+          accept=".mp3,.wav,.m4a,.ogg,.flac,.mp4,.webm" hidden />
+      </div>
+
+      <!-- Selected files list -->
+      <ul class="file-list" id="fileList"></ul>
+
+      <button class="btn btn-primary" id="transcribeBtn" disabled>
+        <span id="btnText">🚀 Transcribe</span>
+        <span id="btnSpinner" class="spinner hidden"></span>
+      </button>
+    </section>
+
+    <!-- Results Section -->
+    <section class="card results-card hidden" id="resultsSection">
+      <div class="results-header">
+        <h2>Transcription Results</h2>
+        <button class="btn btn-sm" id="copyAllBtn">📋 Copy All</button>
+      </div>
+      <div id="resultsContainer"></div>
+    </section>
+
+    <!-- History Section -->
+    <section class="card history-card">
+      <div class="results-header">
+        <h2>📜 History</h2>
+        <button class="btn btn-sm" id="refreshBtn">🔄 Refresh</button>
+      </div>
+      <div id="historyContainer">
+        <p class="muted">Loading history...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── TOAST ──────────────────────────────────────── -->
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

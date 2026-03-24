@@ -1,0 +1,27 @@
+# ── Python ────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# ── Database ──────────────────────────────────────────
+*.db
+*.sqlite3
+data/
+
+# ── Environment (KABHI push mat karo!) ────────────────
+.env
+.env.local
+.env.production
+
+# ── Whisper Model Cache ───────────────────────────────
+.cache/
+
+# ── Docker ────────────────────────────────────────────
+.dockerignore
+
+# ── OS ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
