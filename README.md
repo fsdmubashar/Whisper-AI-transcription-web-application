@@ -1,64 +1,202 @@
-# 🎙️ VoiceScript: AI-Powered Transcription Portal
+# 🎙 VoiceScript AI — Whisper Transcription Web Application
 
-[![Status](https://img.shields.io/badge/Status-Live-success?style=flat-square)]()
-[![Tech Stack](https://img.shields.io/badge/Stack-Python%20|%20FastAPI%20|%20Whisper-blue?style=flat-square)]()
-[![DevOps](https://img.shields.io/badge/DevOps-Docker%20|%20AWS-orange?style=flat-square)]()
-
-**VoiceScript** is a high-performance web application designed to transcribe audio and video files into text using **OpenAI's Whisper AI**. The interface is custom-designed as a **Cloud Monitoring Dashboard**, reflecting a professional DevOps engineering environment.
+A production-grade, containerized audio transcription web application powered by **OpenAI Whisper**, deployed on **AWS EC2** with **Nginx** as a reverse proxy and **Gunicorn** as the WSGI server.
 
 ---
 
-## 👤 Developed By
+## 👤 Author
+
 **Muhammad Mubashar Karamat Ali**  
-*Junior Cloud DevSecOps Engineer*  
-[LinkedIn](https://linkedin.com/in/mubashar-karamat) | [GitHub](https://github.com/fsdmubashar)
+Junior Cloud DevSecOps Engineer  
+`AWS` · `Terraform` · `Jenkins` · `Docker` · `GitHub Actions` · `Python` · `FastAPI`
 
 ---
 
-## 🚀 Key Features
+## 🧰 Tech Stack
 
-- **Multi-Format Ingestion:** Supports MP3, WAV, M4A, MP4, and FLAC.
-- **AI Transcription:** Powered by OpenAI Whisper for high accuracy across multiple languages.
-- **DevOps Dashboard UI:** A sleek, dark-themed interface inspired by infrastructure monitoring tools (Grafana/CloudWatch).
-- **Live Output Stream:** Real-time transcription logs with time-stamping.
-- **Robust Clipboard Engine:** One-click "Copy All" functionality with legacy fallback for all browser environments.
-- **Transcription History:** Persistent logs of previous sessions for quick reference.
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend:** Python, FastAPI
-- **AI Engine:** OpenAI Whisper (Base Model)
-- **Frontend:** HTML5, CSS3 (Custom Grid Layout), Vanilla JavaScript
-- **Deployment & Ops:** Docker, AWS EC2, Terraform (Infrastructure as Code)
+| Layer | Technology |
+|---|---|
+| AI Model | OpenAI Whisper (base) |
+| Backend | Python 3.10 + FastAPI |
+| WSGI Server | Gunicorn + UvicornWorker |
+| Database | SQLite (via SQLAlchemy ORM) |
+| Reverse Proxy | Nginx |
+| Containerization | Docker (Multi-stage Dockerfile) |
+| Infrastructure | AWS EC2 (Ubuntu 22.04) |
+| CI/CD | GitHub Actions |
+| Frontend | HTML5 · CSS3 · Vanilla JS |
 
 ---
 
-## 📸 Dashboard Preview
+## ✨ Features
 
-> *[Note: Add your screenshot here by uploading it to GitHub and updating the link below]*
-> ![Dashboard Preview](static/screenshot.png)
+- 🎵 **Multi-file upload** — MP3, WAV, M4A, OGG, FLAC, MP4, WebM
+- 🌍 **Auto language detection** — Urdu, English, Arabic and 90+ languages
+- 📜 **Transcription history** — Stored in SQLite with delete support
+- 📋 **Copy to clipboard** — One-click copy all results
+- 🔁 **Auto-restart** — Systemd service with restart on failure
+- 🏥 **Health check endpoint** — `/health` for monitoring
 
 ---
 
-## ⚙️ Installation & Setup
+## 📁 Project Structure
 
-### 1. Prerequisites
-- Python 3.9+
-- FFmpeg (Required for audio processing)
-- Docker (Optional for containerized deployment)
+```
+whisper-transcription/
+├── main.py                    # FastAPI application (core logic)
+├── database.py                # SQLAlchemy DB configuration
+├── models.py                  # Database table definitions
+├── schemas.py                 # Pydantic request/response schemas
+├── gunicorn.conf.py           # Production Gunicorn configuration
+├── requirements.txt           # Python dependencies
+├── Dockerfile                 # Multi-stage Docker build
+├── docker-compose.yml         # Full stack (App + Nginx)
+├── .env.example               # Environment variables template
+├── static/
+│   ├── index.html             # Frontend UI
+│   ├── style.css              # Dark terminal theme
+│   └── script.js             # File upload + API integration
+├── nginx/
+│   └── nginx.conf             # Reverse proxy configuration
+├── scripts/
+│   └── deploy_ec2.sh          # Automated EC2 setup script
+└── .github/
+    └── workflows/
+        └── deploy.yml         # GitHub Actions CI/CD pipeline
+```
 
-### 2. Local Setup
+---
+
+## 🚀 Deployment — 3 Methods
+
+### Method 1: Direct EC2 (No Docker)
+
 ```bash
-# Clone the repository
-git clone https://github.com/fsdmubashar/Whisper-AI-transcription-web-application.git
+# 1. SSH into EC2
+ssh -i your-key.pem ubuntu@YOUR_EC2_IP
 
-# Navigate to the directory
+# 2. Install dependencies
+sudo apt-get update -y
+sudo apt-get install -y python3.10 python3.10-venv git ffmpeg nginx
+
+# 3. Clone & setup
+cd /opt && sudo mkdir whisper-app && sudo chown ubuntu:ubuntu whisper-app && cd whisper-app
+git clone https://github.com/fsdmubashar/Whisper-AI-transcription-web-application.git .
+
+# 4. Virtual environment
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+pip install "git+https://github.com/openai/whisper.git"
+
+# 5. Configure & start
+cp .env.example .env
+sudo cp nginx/nginx.conf /etc/nginx/conf.d/whisper.conf
+sudo systemctl restart nginx
+
+# 6. Create systemd service & start
+sudo systemctl enable whisper-app
+sudo systemctl start whisper-app
+```
+
+---
+
+### Method 2: Docker Compose (Multi-stage)
+
+```bash
+# Clone repo
+git clone https://github.com/fsdmubashar/Whisper-AI-transcription-web-application.git
 cd Whisper-AI-transcription-web-application
 
-# Install dependencies
-pip install -r requirements.txt
+# Environment setup
+cp .env.example .env
 
-# Run the application
-uvicorn main:app --reload
+# Build & run
+docker-compose up -d --build
+
+# Verify
+curl http://localhost/health
+```
+
+---
+
+### Method 3: GitHub Actions CI/CD
+
+Set these **GitHub Secrets** (Settings → Secrets → Actions):
+
+| Secret | Value |
+|---|---|
+| `DOCKERHUB_USERNAME` | Your Docker Hub username |
+| `DOCKERHUB_TOKEN` | Docker Hub access token |
+| `EC2_HOST` | EC2 Public IP |
+| `EC2_USER` | `ubuntu` |
+| `EC2_SSH_KEY` | Contents of `.pem` file |
+
+```bash
+# Push to main → Pipeline triggers automatically
+git push origin main
+```
+
+**Pipeline flow:**
+```
+Code Push → Build Docker Image → Push to Docker Hub → SSH to EC2 → Deploy Container → Health Check ✅
+```
+
+---
+
+## 🌐 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/` | Frontend UI |
+| `GET` | `/health` | Health check |
+| `POST` | `/transcribe` | Upload & transcribe audio files |
+| `GET` | `/history` | Fetch transcription history |
+| `DELETE` | `/transcription/{id}` | Delete a record |
+| `GET` | `/docs` | Swagger API documentation |
+
+---
+
+## ⚙️ Environment Variables
+
+```env
+WHISPER_MODEL_SIZE=base        # tiny | base | small | medium | large
+PORT=8000
+LOG_LEVEL=info
+GUNICORN_WORKERS=2
+DATABASE_URL=sqlite:///./transcriptions.db
+```
+
+---
+
+## 🏗️ Architecture Diagram
+
+```
+                         ┌─────────────────────────────┐
+                         │         AWS EC2              │
+                         │      (Ubuntu 22.04)          │
+                         │                              │
+Internet ──── Port 80 ──►│   NGINX (Reverse Proxy)      │
+                         │          │                   │
+                         │          ▼                   │
+                         │  Gunicorn (Port 8000)        │
+                         │    UvicornWorker             │
+                         │          │                   │
+                         │          ▼                   │
+                         │  FastAPI Application         │
+                         │          │                   │
+                         │    ┌─────┴──────┐            │
+                         │    ▼            ▼            │
+                         │ Whisper      SQLite DB       │
+                         │ AI Model   (transcriptions)  │
+                         └─────────────────────────────┘
+```
+
+---
+
+## 📝 License
+
+MIT License — Free to use for learning and personal projects.
+
+---
+
+> **Note:** Monitoring, model versioning, and pipeline orchestration (MLflow, Airflow) are planned for a separate project.
