@@ -199,4 +199,4 @@ MIT License — Free to use for learning and personal projects.
 
 ---
 
-> **Note:** Monitoring, model versioning, and pipeline orchestration (MLflow, Airflow) are planned for a separate project.
+> **Note:** Monitoring, model versioning, and pipeline orchestration (MLflow, Airflow) are planned for a separate project. 
