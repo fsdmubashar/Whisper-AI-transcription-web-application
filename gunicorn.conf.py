@@ -7,7 +7,7 @@ import multiprocessing
 import os
 
 # ─── Server Socket ──────────────────────────────────────────────────────────
-bind      = f"0.0.0.0:{os.getenv('PORT', '8000')}"
+bind      = f"127.0.0.1:{os.getenv('PORT', '8000')}"
 backlog   = 2048   # Queue mein wait karne wale connections ki max tadaad
 
 # ─── Worker Processes ────────────────────────────────────────────────────────
@@ -16,8 +16,10 @@ backlog   = 2048   # Queue mein wait karne wale connections ki max tadaad
 workers        = int(os.getenv("GUNICORN_WORKERS", multiprocessing.cpu_count() * 2 + 1))
 worker_class   = "uvicorn.workers.UvicornWorker"   # ASGI support
 worker_connections = 1000
-timeout        = 120    # Whisper ko time lagta hai, isliye timeout zyada rakho
-keepalive      = 5
+
+timeout        = 600    # Whisper ko time lagta hai, isliye timeout zyada rakho
+keepalive      = 150
+graceful_timeout = 600
 max_requests   = 1000   # Memory leak se bachne ke liye worker restart
 max_requests_jitter = 100
 

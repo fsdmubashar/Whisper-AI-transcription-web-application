@@ -8,6 +8,7 @@ aiofiles==23.2.1               # Async file operations
 # ─── AI / ML ────────────────────────────────────────────────────────────────
 # NOTE: torch CPU-only version Docker image chota rakhne ke liye
 # GPU ke liye: torch==2.2.0+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+numpy<2.0.0
 torch==2.2.0
 # openai-whisper GitHub se install hoga (Dockerfile mein)
 

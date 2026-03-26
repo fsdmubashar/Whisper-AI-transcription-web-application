@@ -127,7 +127,7 @@ async def transcribe_audio(
         try:
             # Whisper se transcribe karo
             task = "translate" if translate else "transcribe"
-	    result = whisper_model.transcribe(tmp_path, task=task)
+            result = whisper_model.transcribe(tmp_path, task=task)
 
             # Database mein save karo
             db_record = models.Transcription(
