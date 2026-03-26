@@ -7,8 +7,9 @@ import multiprocessing
 import os
 
 # ─── Server Socket ──────────────────────────────────────────────────────────
-bind      = f"127.0.0.1:{os.getenv('PORT', '8000')}"
+bind      = f"0.0.0.0:{os.getenv('PORT', '8000')}"
 backlog   = 2048   # Queue mein wait karne wale connections ki max tadaad
+
 
 # ─── Worker Processes ────────────────────────────────────────────────────────
 # Formula: (2 × CPU cores) + 1
