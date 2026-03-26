@@ -26,3 +26,7 @@ data/
 # ── OS ────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# Docker & System Scripts
+get-docker.sh
+*.sh
